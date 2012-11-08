@@ -90,14 +90,14 @@ class AttachmentBehavior extends CActiveRecordBehavior {
     {
         if($style == ''){
             if($this->hasAttachment())
-                return $this->Owner->filename;
+                return $this->getOwnerAttribute();
             elseif($this->fallback_image != '')
                 return $this->fallback_image;
             else
                 return '';
         }else{
             if(isset($this->styles[$style])){
-                $im = preg_replace('/\.(.*)$/','-'.$style.'\\0',$this->Owner->filename);                
+                $im = preg_replace('/\.(.*)$/','-'.$style.'\\0',$this->getOwnerAttribute());                
                 if(file_exists($im))
                     return  $im;
                 elseif(isset($this->fallback_image))
@@ -112,7 +112,7 @@ class AttachmentBehavior extends CActiveRecordBehavior {
      */
     public function hasAttachment()
     {
-        return file_exists($this->Owner->filename);
+        return file_exists($this->getOwnerAttribute());
     }
     
     /**
@@ -120,8 +120,8 @@ class AttachmentBehavior extends CActiveRecordBehavior {
      */
     public function deleteAttachment()
     {
-        if(file_exists($this->Owner->{$this->attribute}))unlink($this->Owner->{$this->attribute});
-        preg_match('/\.(.*)$/',$this->Owner->{$this->attribute},$matches);
+        if(file_exists($this->getOwnerAttribute()))unlink($this->getOwnerAttribute());
+        preg_match('/\.(.*)$/',$this->getOwnerAttribute(),$matches);
         $this->file_extension = end($matches);
         if(!empty($this->styles)){
             $this->path = str_replace('.:ext','-:custom.:ext',$this->path);    
@@ -131,8 +131,13 @@ class AttachmentBehavior extends CActiveRecordBehavior {
             }
         }
     }
-    
-    public function afterDelete($event)
+
+	protected function getOwnerAttribute()
+	{
+		return $this->Owner->{$this->attribute};
+	}
+
+	public function afterDelete($event)
     {
         $this->deleteAttachment();
     }
@@ -144,7 +149,7 @@ class AttachmentBehavior extends CActiveRecordBehavior {
         if(!is_null($file)){
             if(!$this->Owner->isNewRecord){
                 //delete previous attachment
-                if(file_exists($this->Owner->{$this->attribute}))unlink($this->Owner->{$this->attribute});
+                if(file_exists($this->getOwnerAttribute()))unlink($this->getOwnerAttribute());
             }else{
                 $this->Owner->isNewRecord = false;
             }
